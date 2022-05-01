@@ -1,4 +1,4 @@
-name: authservice
+name: blockmedicchain
 on:
   push:
     tags:
