@@ -14,6 +14,7 @@ RUN apk add --no-cache tzdata
 
 
 WORKDIR /root
+COPY --from=builder /res /root/res
 COPY --from=builder /app .
 COPY --from=builder /start.sh .
 

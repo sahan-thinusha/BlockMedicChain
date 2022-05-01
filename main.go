@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	_ "strconv"
+	"strings"
 	"time"
 	_ "time"
 )
@@ -28,22 +29,32 @@ import (
 )
 
 type HealthReport struct {
-	ID                  string    `bson:"_id" json:"node"`
-	Name                string    `json:"name"`
-	ContactNo           string    `json:"contactno"`
-	Address             string    `json:"address"`
-	Nationality         string    `json:"nationality"`
-	DOB                 string    `json:"dob"`
-	Weight              string    `json:"weight"`
-	BloodPressure       string    `json:"bloodPressure"`
-	BloodSugar          string    `json:"bloodsugar"`
-	Allergies           string    `json:"allergies"`
-	Illness             string    `json:"illness"`
-	CovidVaccineDetails string    `json:"covidvaccinedetails"`
-	EmergencyContact    string    `json:"emergencycontact"`
-	PreviousNode        string    `json:"previous_node"`
-	UserId              string    `json:"user_id"`
-	CreatedAt           time.Time `bson:"created_at" json:"-"`
+	ID                     string    `bson:"_id" json:"node"`
+	Name                   string    `json:"name"`
+	NameUpdatedAt          time.Time `json:"nameUpdatedAt"`
+	ContactNo              string    `json:"contactno"`
+	ContactNoUpdatedAt     time.Time `json:"contactNoUpdatedAt"`
+	Address                string    `json:"address"`
+	AddressUpdatedAt       time.Time `json:"addressUpdatedAt"`
+	Nationality            string    `json:"nationality"`
+	DOB                    string    `json:"dob"`
+	Weight                 string    `json:"weight"`
+	WeightUpdatedAt        time.Time `json:"weightUpdatedAt"`
+	BloodPressure          string    `json:"bloodPressure"`
+	BloodPressureUpdatedAt time.Time `json:"bloodPressureUpdatedAt"`
+	BloodSugar             string    `json:"bloodsugar"`
+	BloodSugarUpdatedAt    time.Time `json:"bloodSugarUpdatedAt"`
+	Allergies              string    `json:"allergies"`
+	AllergiesUpdatedAt     time.Time `json:"allergiesUpdatedAt"`
+	Illness                string    `json:"illness"`
+	IllnessUpdatedAt       time.Time `json:"illnessUpdatedAt"`
+	CovidVaccineDetails    string    `json:"covidvaccinedetails"`
+	CovidVaccineUpdatedAt  time.Time `json:"covidVaccineUpdatedAt"`
+	EmergencyContact       string    `json:"emergencycontact"`
+	EmergencyUpdatedAt     time.Time `json:"emergencyUpdatedAt"`
+	PreviousNode           string    `json:"previous_node"`
+	UserId                 string    `json:"user_id"`
+	CreatedAt              time.Time `bson:"created_at" json:"-"`
 }
 
 func main() {
@@ -99,6 +110,7 @@ func main() {
 	v1.POST("/savehealthreport", saveHealthReport)
 	v1.GET("/gethealthreportfromuser", getReportByUser)
 	v1.GET("/gethealthreport", getReportByNode)
+	v1.GET("/gethealthreportfromuserid", getReportByUserId)
 	r.GET("/jwt", getJWT)
 	e.Logger.Fatal(e.Start(":8080"))
 }
@@ -593,7 +605,8 @@ func (t *Chaincode) changeOrderPrivateDetails(stub shim.ChaincodeStubInterface, 
 
 func saveHealthReport(c echo.Context) error {
 	report := HealthReport{}
-	report.CreatedAt = time.Now()
+	now := time.Now()
+	report.CreatedAt = now
 	report.UserId = c.Get("UserId").(string)
 	if err := c.Bind(&report); err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
@@ -601,11 +614,84 @@ func saveHealthReport(c echo.Context) error {
 	db := env.MDB
 
 	rpt := HealthReport{}
-	opts := options.FindOne().SetSort(bson.D{{"created_at", 1}})
+	opts := options.FindOne().SetSort(bson.D{{"created_at", -1}})
 	if e := db.Collection("HealthReport").FindOne(context.Background(), bson.M{"userid": report.UserId}, opts).Decode(&rpt); e != nil {
 	}
 	if rpt.UserId != "" {
 		report.PreviousNode = rpt.ID
+		fmt.Println("ss", rpt.CreatedAt)
+		fmt.Println("ss", rpt.ID)
+
+		if !strings.EqualFold(rpt.Name, report.Name) {
+			report.NameUpdatedAt = now
+		} else {
+			report.NameUpdatedAt = rpt.NameUpdatedAt.Local()
+		}
+		if !strings.EqualFold(rpt.Address, report.Address) {
+			report.AddressUpdatedAt = now
+		} else {
+			report.AddressUpdatedAt = rpt.AddressUpdatedAt.Local()
+		}
+
+		if !strings.EqualFold(rpt.BloodSugar, report.BloodSugar) {
+			report.BloodSugarUpdatedAt = now
+		} else {
+			report.BloodSugarUpdatedAt = rpt.BloodSugarUpdatedAt.Local()
+		}
+
+		if !strings.EqualFold(rpt.BloodPressure, report.BloodPressure) {
+			report.BloodPressureUpdatedAt = now
+		} else {
+			report.BloodPressureUpdatedAt = rpt.BloodPressureUpdatedAt.Local()
+		}
+
+		if !strings.EqualFold(rpt.CovidVaccineDetails, report.CovidVaccineDetails) {
+			report.CovidVaccineUpdatedAt = now
+		} else {
+			report.CovidVaccineUpdatedAt = rpt.CovidVaccineUpdatedAt.Local()
+		}
+
+		if !strings.EqualFold(rpt.Illness, report.Illness) {
+			report.IllnessUpdatedAt = now
+		} else {
+			report.IllnessUpdatedAt = rpt.IllnessUpdatedAt.Local()
+		}
+
+		if !strings.EqualFold(rpt.Allergies, report.Allergies) {
+			report.AllergiesUpdatedAt = now
+		} else {
+			report.AllergiesUpdatedAt = rpt.AllergiesUpdatedAt.Local()
+		}
+
+		if !strings.EqualFold(rpt.Weight, report.Weight) {
+			report.WeightUpdatedAt = now
+		} else {
+			report.WeightUpdatedAt = rpt.WeightUpdatedAt.Local()
+		}
+
+		if !strings.EqualFold(rpt.ContactNo, report.ContactNo) {
+			report.ContactNoUpdatedAt = now
+		} else {
+			report.ContactNoUpdatedAt = rpt.ContactNoUpdatedAt.Local()
+		}
+
+		if !strings.EqualFold(rpt.EmergencyContact, report.EmergencyContact) {
+			report.EmergencyUpdatedAt = now
+		} else {
+			report.EmergencyUpdatedAt = rpt.EmergencyUpdatedAt.Local()
+		}
+
+	} else {
+		report.NameUpdatedAt = now
+		report.AddressUpdatedAt = now
+		report.BloodSugarUpdatedAt = now
+		report.BloodPressureUpdatedAt = now
+		report.CovidVaccineUpdatedAt = now
+		report.AllergiesUpdatedAt = now
+		report.IllnessUpdatedAt = now
+		report.WeightUpdatedAt = now
+		report.ContactNoUpdatedAt = now
+		report.EmergencyUpdatedAt = now
 	}
 
 	report.ID = primitive.NewObjectID().Hex()
@@ -625,8 +711,19 @@ func getReportByUser(c echo.Context) error {
 	userId := c.Get("UserId").(string)
 	db := env.MDB
 
-	opts := options.FindOne().SetSort(bson.D{{"created_at", 1}})
+	opts := options.FindOne().SetSort(bson.D{{"created_at", -1}})
 	if err := db.Collection("HealthReport").FindOne(context.Background(), bson.M{"userid": userId}, opts).Decode(&report); err != nil {
+	}
+	return c.JSON(http.StatusOK, report)
+}
+
+func getReportByUserId(c echo.Context) error {
+	report := HealthReport{}
+	id := c.QueryParam("userId")
+	db := env.MDB
+
+	opts := options.FindOne().SetSort(bson.D{{"created_at", -1}})
+	if err := db.Collection("HealthReport").FindOne(context.Background(), bson.M{"userid": id}, opts).Decode(&report); err != nil {
 	}
 	return c.JSON(http.StatusOK, report)
 }
