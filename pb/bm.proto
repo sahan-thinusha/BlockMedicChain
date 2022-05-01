@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package ="BlockMedicChain/pb";
+
+message HealthReport {
+  string metaGitBaseUrl = 1;
+  string metaRepoName = 2;
+  string metaRepoBranch = 3;
+  string sourceGitBaseUrl = 4;
+  string sourceRepoName = 5;
+  string sourceRepoBranch = 6;
+  string projectName =7;
+  string projectMasterUid=8;
+  string workspaceID=9;
+  string description=10;
+  string buildId=11;
+  string lang=12;
+  string target=13;
+}
+enum JobStatus {
+  ACCEPTED = 0;
+  REJECTED = 1;
+  COMPLETED = 2;
+  FAILED = 3;
+}
+message GenResult{
+  int32 solutionId = 1;
+  string projectUUId = 2;
+  JobStatus status = 3;
+  string msg = 4;
+  string branch=9;
+}
+
+
+service Generate{
+  rpc Generate(stream HealthReport) returns (stream GenResult) {}
+}
