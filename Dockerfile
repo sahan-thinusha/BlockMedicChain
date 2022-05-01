@@ -9,7 +9,7 @@ RUN go build -o app .
 CMD ["./app"]
 
 
-FROM alpine
+FROM virtuan/alpine-3
 RUN apk add --no-cache tzdata
 
 
