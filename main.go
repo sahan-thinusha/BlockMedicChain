@@ -2,8 +2,10 @@ package main
 
 import (
 	"BlockMedicChain/env"
+	"bytes"
 	_ "bytes"
 	"context"
+	"encoding/json"
 	_ "encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +19,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	_ "strconv"
 	"strings"
 	"time"
@@ -57,6 +60,21 @@ type HealthReport struct {
 	CreatedAt              time.Time `bson:"created_at" json:"-"`
 }
 
+type order struct {
+	ObjectType            string `json:"docType"`
+	Order_raw_material_id string `json:"order_raw_material_id"`
+	Manufacturer_id       string `json:"manufacturer_id"`
+	Provider_id           string `json:"provider_id"`
+	Material_name         string `json:"material_name"`
+	Order_medicine_id     string `json:"order_medicine_id"`
+	Quantity              string `json:"quantity"`
+	Status                string `json:"status"`
+}
+
+type orderPrivateDetails struct {
+	Price string `json:"price"`
+}
+
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -65,7 +83,12 @@ func main() {
 
 	env.JWTsecret = "secret"
 
-	r := e.Group("/api")
+	err := shim.Start(new(Chaincode))
+	if err != nil {
+		fmt.Printf("Error starting Simple chaincode: %s", err)
+	}
+
+	r := e.Group("/blockmedic/api")
 	v1 := r.Group("/v1")
 	v1.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		ParseTokenFunc: func(auth string, c echo.Context) (interface{}, error) {
@@ -118,21 +141,9 @@ func main() {
 type Chaincode struct {
 }
 
-func (t *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
-	//TODO implement me
-	panic("implement me")
-}
-
-func gg() {
-	err := shim.Start(new(Chaincode))
-	if err != nil {
-		fmt.Printf("Error starting Simple chaincode: %s", err)
-	}
-}
-
 func (t *Chaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	return shim.Success(nil)
-} /*
+}
 
 func (t *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	function, args := stub.GetFunctionAndParameters()
@@ -601,7 +612,6 @@ func (t *Chaincode) changeOrderPrivateDetails(stub shim.ChaincodeStubInterface, 
 	fmt.Println("- end changeStatus (success)")
 	return shim.Success(nil)
 }
-*/
 
 func saveHealthReport(c echo.Context) error {
 	report := HealthReport{}
