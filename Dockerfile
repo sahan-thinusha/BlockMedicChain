@@ -1,23 +1,17 @@
-FROM golang:1.18 as builder
+FROM golang:1.18-alpine
+
+RUN apk add --no-cache git
 
 WORKDIR /
 
 COPY . .
 RUN go mod tidy
+# Build the Go app
 RUN go build -o app .
 
-CMD ["./app"]
 
-
-FROM virtuan/alpine-3
-RUN apk add --no-cache tzdata
-
-
-WORKDIR /root
-COPY --from=builder /res /root/res
-COPY --from=builder /app .
-COPY --from=builder /start.sh .
 
 EXPOSE $PORT
 
-CMD ["sh", "start.sh"]
+# Run the binary program produced by `go install`
+CMD ["./app"]
